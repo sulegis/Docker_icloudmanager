@@ -1,0 +1,42 @@
+zabbix-db:
+   image: zabbix/zabbix-db-mariadb
+   volumes:
+     - /demo_icm_db/mariadb_data:/var/lib/mysql
+   restart: always
+   ports:
+     - "3306:3306"
+   environment:
+     - MARIADB_USER=zabbix
+     - MARIADB_PASS=zabbix
+
+zabbix-server:
+   image: zabbix/zabbix-3.0:3.0.0
+   restart: always
+   ports:
+     - "80:80"
+     - "10051:10051"
+   links:
+     - zabbix-db:zabbix_db
+   environment:
+     - ZS_DBHost=zabbix_db
+     - ZS_DBUser=zabbix
+     - ZS_DBPassword=zabbix
+
+icloudmanager:
+   image: 192.168.169.114:5000/supermap/icloudmanager:c810
+   restart: always
+   volumes:
+     - /demo_icm_db:/etc/icloud/config
+   environment:
+     - ZABBIX_URI=http://zabbix-server:80/api_jsonrpc.php
+     - ZABBIX_USERNAME=Admin
+     - ZABBIX_PASSWORD=zabbix
+     - PLATFORMTYPE=DOCKER 
+     - DOCKER_SERVERIP=192.168.169.114
+     - DOCKER_SERVERPORT=6000
+     - DOCKER_PROTOCOL=tcp
+     - DOCKER_API_VERSION=1.22
+   ports:
+     - "8080:8080"
+   links:
+     - zabbix-server:zabbix-server
